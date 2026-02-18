@@ -1,5 +1,6 @@
-FROM nginx:alpine
-# Copy our custom config into the image
-COPY nginx.conf /etc/nginx/nginx.conf
-# Expose the port we defined in the config
-EXPOSE 8080
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y squid
+# Allow all traffic (Note: This makes it public!)
+RUN sed -i 's/http_access deny all/http_access allow all/' /etc/squid/squid.conf
+EXPOSE 3128
+CMD ["squid", "-N"]
