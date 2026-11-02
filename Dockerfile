@@ -15,6 +15,7 @@ http_port 3128
 
 auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
 auth_param basic realm Private Proxy
+auth_param basic casesensitive on
 auth_param basic credentialsttl 2 hours
 
 acl authenticated proxy_auth REQUIRED
