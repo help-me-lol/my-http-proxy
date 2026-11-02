@@ -11,11 +11,11 @@ RUN curl -L https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0
 COPY nginx.conf /etc/nginx/nginx.conf
 RUN sed -i 's/http_access deny all/http_access allow all/' /etc/squid/squid.conf
 
-# Startup script to boot Nginx on 8080, Squid, and Bore
+# Create startup script to run Squid, Bore, and Nginx concurrently
 RUN echo '#!/bin/bash' > /start.sh && \
-    echo 'service nginx start' >> /start.sh && \
     echo 'squid' >> /start.sh && \
-    echo 'bore local 3128 --to bore.pub' >> /start.sh && \
+    echo 'bore local 3128 --to bore.pub &' >> /start.sh && \
+    echo 'nginx -g "daemon off;"' >> /start.sh && \
     chmod +x /start.sh
 
 EXPOSE 8080 3128
