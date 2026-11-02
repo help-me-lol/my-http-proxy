@@ -48,8 +48,8 @@ chmod 640 /etc/squid/passwd
 squid
 
 while true; do
-    echo "Starting Bore on fixed port 49133..."
-    bore local 3128 --to bore.pub --port 49133
+    echo "Starting Bore on fixed port 49287..."
+    bore local 3128 --to bore.pub --port 49287
     echo "Bore disconnected. Retrying in 5 seconds..."
     sleep 5
 done &
