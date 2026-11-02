@@ -19,5 +19,5 @@ RUN echo '#!/bin/bash' > /start.sh && \
     echo 'nginx -g "daemon off;"' >> /start.sh && \
     chmod +x /start.sh
 
-EXPOSE 8080 3128
+EXPOSE 8080
 CMD ["/start.sh"]
