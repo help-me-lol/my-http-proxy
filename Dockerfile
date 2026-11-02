@@ -1,19 +1,22 @@
 FROM ubuntu:latest
 
-# Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Squid and Nginx
-RUN apt-get update && apt-get install -y squid nginx && rm -rf /var/lib/apt/lists/*
+# Install Squid, curl, and networking tools
+RUN apt-get update && apt-get install -y squid curl && rm -rf /var/lib/apt/lists/*
 
-# Copy configuration files
-COPY nginx.conf /etc/nginx/nginx.conf
+# Download and install the bore CLI binary
+RUN curl -L https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin
+
+# Configure Squid to allow all proxy traffic
 RUN sed -i 's/http_access deny all/http_access allow all/' /etc/squid/squid.conf
 
-# Expose Nginx web port and Squid proxy port
-EXPOSE 8080 3128
+# Create a startup script that launches Squid and tunnels the Squid port (3128) via bore
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'squid' >> /start.sh && \
+    echo 'bore local 3128 --to bore.pub' >> /start.sh && \
+    chmod +x /start.sh
 
-# Custom startup script to run both services concurrently
-RUN echo '#!/bin/bash\nservice squid start\nnginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
+EXPOSE 3128
 
 CMD ["/start.sh"]
