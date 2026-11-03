@@ -86,4 +86,3 @@ RUN chmod +x /start.sh
 EXPOSE 8080
 
 CMD ["/start.sh"]
-```
