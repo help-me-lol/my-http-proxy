@@ -1,12 +1,21 @@
 
 FROM ubuntu:latest
+
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y squid nginx curl apache2-utils && rm -rf /var/lib/apt/lists/*
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    squid \
+    nginx \
+    curl \
+    apache2-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 # Download Bore
-RUN curl -L https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin
+RUN curl -L https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz \
+    | tar -xz -C /usr/local/bin
 
+# Copy Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Configure authenticated Squid proxy
@@ -32,33 +41,46 @@ cache deny all
 visible_hostname my-proxy-node
 EOF
 
-# Startup script
+# Create startup script
 RUN cat > /start.sh <<'EOF'
 #!/bin/bash
 set -e
 
+# Check credentials
 if [ -z "$SQUID_USERNAME" ] || [ -z "$SQUID_PASSWORD" ]; then
     echo "ERROR: SQUID_USERNAME and SQUID_PASSWORD must be set"
     exit 1
 fi
 
+# Create password file
 printf '%s\n' "$SQUID_PASSWORD" | htpasswd -B -c -i /etc/squid/passwd "$SQUID_USERNAME"
+
 chown proxy:proxy /etc/squid/passwd
 chmod 640 /etc/squid/passwd
 
+# Start Squid
 squid
 
-while true; do
-    echo "Starting Bore on fixed port 23456..."
-    bore local 3128 --to bore.pub --port 23456
-    echo "Bore disconnected. Retrying in 5 seconds..."
-    sleep 5
-done &
+# Keep Bore reconnecting
+(
+    while true; do
+        echo "Starting Bore on fixed port 23456..."
 
+        bore local 3128 --to bore.pub --port 23456
+
+        EXIT_CODE=$?
+        echo "Bore exited with code $EXIT_CODE"
+        echo "Retrying in 15 seconds..."
+        sleep 15
+    done
+) &
+
+# Keep Nginx running
 nginx -g "daemon off;"
 EOF
 
 RUN chmod +x /start.sh
 
 EXPOSE 8080
+
 CMD ["/start.sh"]
