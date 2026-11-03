@@ -1,4 +1,4 @@
-
+```dockerfile
 FROM ubuntu:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -66,10 +66,13 @@ squid
     while true; do
         echo "Starting Bore on fixed port 23456..."
 
-        bore local 3128 --to bore.pub --port 23456
+        if bore local 3128 --to bore.pub --port 23456; then
+            echo "Bore exited normally."
+        else
+            EXIT_CODE=$?
+            echo "Bore exited with code $EXIT_CODE."
+        fi
 
-        EXIT_CODE=$?
-        echo "Bore exited with code $EXIT_CODE"
         echo "Retrying in 15 seconds..."
         sleep 15
     done
@@ -84,3 +87,4 @@ RUN chmod +x /start.sh
 EXPOSE 8080
 
 CMD ["/start.sh"]
+```
